@@ -15,13 +15,19 @@ public class CriarUsuarioUseCase {
     private final UsuarioRepository usuarioRepository;
 
     public UsuarioResponse executar(CriarUsuarioRequest request) {
-        if (usuarioRepository.existePorEmail(request.email())) {
-            throw new EmailJaCadastradoException(request.email());
+        String email = request.email()
+                .trim()
+                .toLowerCase();
+
+        String nome = request.nome().trim();
+
+        if (usuarioRepository.existePorEmail(email)) {
+            throw new EmailJaCadastradoException(email);
         }
 
         Usuario usuario = Usuario.builder()
-                .nome(request.nome().trim())
-                .email(request.email().toLowerCase().trim())
+                .nome(nome)
+                .email(email)
                 .build();
 
         Usuario salvo = usuarioRepository.salvar(usuario);
