@@ -2,16 +2,21 @@ package com.roomreservas.presentation.controller;
 
 import com.roomreservas.application.dto.request.AtualizarUsuarioRequest;
 import com.roomreservas.application.dto.request.CriarUsuarioRequest;
+import com.roomreservas.application.dto.response.ImportacaoUsuariosResponse;
 import com.roomreservas.application.dto.response.UsuarioResponse;
 import com.roomreservas.application.usecase.usuario.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,11 +30,33 @@ public class UsuarioController {
     private final BuscarUsuarioUseCase buscarUsuarioUseCase;
     private final AtualizarUsuarioUseCase atualizarUsuarioUseCase;
     private final DeletarUsuarioUseCase deletarUsuarioUseCase;
+    private final ImportarUsuariosUseCase importarUsuariosUseCase;
 
     @PostMapping
     @Operation(summary = "Criar usuário", description = "Cadastra um novo usuário no sistema")
     public ResponseEntity<UsuarioResponse> criar(@Valid @RequestBody CriarUsuarioRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(criarUsuarioUseCase.executar(request));
+    }
+
+    @PostMapping(value = "/excel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Importar usuários a partir de uma planilha Excel", description = "Cadastra novos usuários no sistema a partir de uma planilha Excel.")
+    public ResponseEntity<ImportacaoUsuariosResponse> importar(@RequestParam("arquivo") MultipartFile arquivo) {
+        try {
+
+            ImportacaoUsuariosResponse response =
+                    importarUsuariosUseCase.executar(
+                            arquivo.getInputStream()
+                    );
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException ex) {
+
+            throw new RuntimeException(
+                "Erro ao ler arquivo enviado",
+                ex
+            );
+        }
     }
 
     @GetMapping("/{id}")
